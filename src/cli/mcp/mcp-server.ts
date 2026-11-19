@@ -1,12 +1,12 @@
 import { McpServer } from '@modelcontextprotocol/server'
 import { readOrcaCliVersion } from '../cli-version'
-import type { McpToolContext, RegisteredMcpTool } from './mcp-tool-registry'
+import type { McpServerContext, RegisteredMcpTool } from './mcp-tool-registry'
 
 export const ORCA_MCP_SERVER_NAME = 'orca'
 
 export function createOrcaMcpServer(
   tools: readonly RegisteredMcpTool[],
-  ctx: McpToolContext
+  ctx: McpServerContext
 ): McpServer {
   const server = new McpServer(
     { name: ORCA_MCP_SERVER_NAME, version: readOrcaCliVersion() ?? '0.0.0' },
@@ -22,7 +22,7 @@ export function createOrcaMcpServer(
         inputSchema: tool.inputSchema,
         annotations: tool.annotations
       },
-      (input) => tool.run(input, ctx)
+      (input, request) => tool.run(input, { ...ctx, signal: request.mcpReq.signal })
     )
   }
   return server

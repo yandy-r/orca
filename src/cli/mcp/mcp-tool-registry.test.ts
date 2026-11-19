@@ -35,7 +35,7 @@ describe('resolveMcpTools', () => {
     )
   })
 
-  it('rejects ids that are not dotted capability ids', () => {
+  it('rejects ids that are not capability ids', () => {
     expect(() => resolveMcpTools([tool('repo_list')])).toThrow(
       'Invalid MCP capability id "repo_list"'
     )

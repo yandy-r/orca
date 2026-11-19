@@ -1,8 +1,13 @@
 import type { CallToolResult, ToolAnnotations } from '@modelcontextprotocol/server'
 import type { z } from 'zod'
 
-export type McpToolContext = {
+export type McpServerContext = {
   cwd: string
+}
+
+export type McpToolContext = McpServerContext & {
+  /** Aborts when the client cancels the call or the connection closes. */
+  signal: AbortSignal
 }
 
 export type McpToolDefinition<Input extends z.ZodObject = z.ZodObject> = {
@@ -25,10 +30,7 @@ export function defineMcpTool<Input extends z.ZodObject>(
   }
 }
 
-/** One entry per capability id; capability issues append here. */
-export const MCP_TOOL_DEFINITIONS: readonly McpToolDefinition[] = []
-
-const CAPABILITY_ID_PATTERN = /^[a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)+$/
+const CAPABILITY_ID_PATTERN = /^[a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)*$/
 
 export function mcpToolName(capabilityId: string): string {
   return capabilityId.replaceAll('.', '_')
@@ -37,9 +39,7 @@ export function mcpToolName(capabilityId: string): string {
 export type RegisteredMcpTool = McpToolDefinition & { name: string }
 
 /** Validates the table and returns it sorted by tool name so `tools/list` order never depends on edit order. */
-export function resolveMcpTools(
-  definitions: readonly McpToolDefinition[] = MCP_TOOL_DEFINITIONS
-): RegisteredMcpTool[] {
+export function resolveMcpTools(definitions: readonly McpToolDefinition[]): RegisteredMcpTool[] {
   const byName = new Map<string, RegisteredMcpTool>()
   const capabilityIds = new Set<string>()
   for (const definition of definitions) {
