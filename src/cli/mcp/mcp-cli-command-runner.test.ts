@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest'
 import { runOrcaCliCommand } from './mcp-cli-command-runner'
 
-// Budget covers SIGTERM-to-SIGKILL tree termination after the 200ms deadline.
+// Budget covers process-tree termination after the 200ms deadline.
 it('settles a timed-out command even while a grandchild holds its output pipes', async () => {
   const holdPipes = `require('node:child_process').spawn(process.execPath, ['-e', 'setTimeout(() => {}, 8000)'], { stdio: 'inherit' }); setTimeout(() => {}, 8000)`
   const result = await runOrcaCliCommand(

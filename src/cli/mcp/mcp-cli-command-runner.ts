@@ -109,9 +109,23 @@ export function cliJsonToToolResult(
 let activeCommands = 0
 const waitingCommands: (() => void)[] = []
 
-async function withCommandSlot<T>(run: () => Promise<T>): Promise<T> {
+async function withCommandSlot<T>(signal: AbortSignal, run: () => Promise<T>): Promise<T> {
   if (activeCommands >= MAX_CONCURRENT_CLI_COMMANDS) {
-    await new Promise<void>((acquire) => waitingCommands.push(acquire))
+    const acquired = await new Promise<boolean>((settle) => {
+      const acquire = (): void => {
+        signal.removeEventListener('abort', onAbort)
+        settle(true)
+      }
+      const onAbort = (): void => {
+        waitingCommands.splice(waitingCommands.indexOf(acquire), 1)
+        settle(false)
+      }
+      waitingCommands.push(acquire)
+      signal.addEventListener('abort', onAbort, { once: true })
+    })
+    if (!acquired) {
+      return run()
+    }
   } else {
     activeCommands++
   }
@@ -149,7 +163,9 @@ async function spawnCliCommand(
       timeoutMs,
       signal: command.signal,
       maxOutputBytes: MAX_CLI_OUTPUT_BYTES,
-      killOnOutputLimit: true
+      killOnOutputLimit: true,
+      // Stops reach the whole process tree, not just the CLI root.
+      terminationBarrier: true
     })
   } catch (error) {
     return errorResult(
@@ -179,5 +195,5 @@ export function runOrcaCliCommand(
   } catch (error) {
     return Promise.resolve(errorResult(error instanceof Error ? error.message : String(error)))
   }
-  return withCommandSlot(() => spawnCliCommand(command, resolved))
+  return withCommandSlot(command.signal, () => spawnCliCommand(command, resolved))
 }

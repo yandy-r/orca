@@ -84,7 +84,8 @@ it('writes only JSON-RPC messages to stdout and exits when stdin closes', async 
       if (
         stdout
           .split('\n')
-          .some((line) => line.startsWith('{') && line.endsWith('}') && JSON.parse(line).id === 2)
+          .slice(0, -1)
+          .some((line) => line.includes('"id":2'))
       ) {
         done()
       }
