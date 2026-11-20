@@ -207,6 +207,11 @@ export const HANDLER_GROUPS: readonly HandlerGroup[] = [
     load: async () => (await import('../agents/agent-hooks.js')).AGENT_HOOK_HANDLERS
   },
   {
+    name: 'mcp',
+    keys: ['mcp'],
+    load: async () => (await import('../mcp/mcp-handlers.js')).MCP_HANDLERS
+  },
+  {
     name: 'agent-launch',
     keys: ['agent launch'],
     load: async () => (await import('../agents/agent-launch.js')).AGENT_LAUNCH_HANDLERS
